@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -370,6 +370,31 @@ app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, 'spa-warriors.html'));
 });
 
-app.listen(port, () => {
+const LAPIS_ENV_KEYS = ['LAPIS_SERVER', 'LAPIS_DATABASE', 'LAPIS_USERNAME', 'LAPIS_PASSWORD'];
+function warnMissingLapisEnv() {
+  const missing = LAPIS_ENV_KEYS.filter((k) => !process.env[k] || !String(process.env[k]).trim());
+  if (!missing.length) return;
+  console.warn('');
+  console.warn('[UYARI] Lapis .env eksik veya bos:', missing.join(', '));
+  console.warn('        Slot/pricing API "Missing Lapis connection env vars" doner.');
+  console.warn('        Proje kokunde .env olusturun: copy .env.example .env  (Windows) sonra LAPIS_* doldurun.');
+  console.warn('');
+}
+
+warnMissingLapisEnv();
+
+const server = app.listen(port, () => {
   console.log(`Sense Spa Quest running on http://localhost:${port}`);
+});
+server.on('error', (err) => {
+  if (err && err.code === 'EADDRINUSE') {
+    console.error('');
+    console.error(`[HATA] Port ${port} zaten kullaniliyor (EADDRINUSE).`);
+    console.error('       Eski "SpaWarrior Server" CMD penceresini kapatın veya baska port: set PORT=3001');
+    console.error('       Sonra bu klasorde tekrar: npm start');
+    console.error('');
+  } else {
+    console.error('[HATA] Sunucu baslatilamadi:', err && err.message ? err.message : err);
+  }
+  process.exit(1);
 });

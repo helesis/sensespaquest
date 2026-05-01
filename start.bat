@@ -18,6 +18,16 @@ if not exist "package.json" (
   exit /b 1
 )
 
+if not exist ".env" (
+  echo.
+  echo ========================================================================
+  echo   UYARI: .env yok — Lapis slot/pricing calismaz ^(API 500 / Missing env^).
+  echo   Proje kokunde:  copy .env.example .env   sonra LAPIS_* satirlarini doldurun.
+  echo ========================================================================
+  echo.
+  timeout /t 6 /nobreak
+)
+
 if not exist "node_modules\" (
   echo Ilk kurulum: npm install calistiriliyor...
   call npm install
@@ -32,6 +42,7 @@ if not defined PORT set "PORT=3000"
 set "URL=http://127.0.0.1:%PORT%/"
 
 echo Sense Spa Quest sunucusu ayri pencerede baslatiliyor...
+echo Not: EADDRINUSE port 3000 = zaten acik sunucu. Onceki "SpaWarrior Server" penceresini kapatin.
 start "SpaWarrior Server" /D "%~dp0" cmd /k "npm start"
 
 echo Sunucunun ayaga kalkmasi bekleniyor...
