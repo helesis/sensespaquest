@@ -2115,6 +2115,30 @@ function selectSlot(time, day, el) {
 let wheelSpinning=false, wheelAngle=0, wheelTarget=0, wheelFrame=null;
 let currentWheelSlices=null;
 
+/* 120 sn hareketsizlik → ana ekran; saniyelik kontrol (pointermove’da sürekli timer kurulmasın) */
+const IDLE_HOME_MS = 120000;
+let idleLastActivity = Date.now();
+function markUserActivity() {
+  idleLastActivity = Date.now();
+}
+function tickIdleHome() {
+  const active = document.querySelector('.screen.active');
+  if (!active || active.id === 's-attract') return;
+  if (Date.now() - idleLastActivity < IDLE_HOME_MS) return;
+  markUserActivity();
+  wheelSpinning = false;
+  currentWheelSlices = null;
+  /* Ana ekrana dönerken müzik kapalıysa tekrar aç (goScreen → applyScreenMusic çalar) */
+  if (!musicOn) musicOn = true;
+  resetAll();
+}
+(function setupIdleReturnHome() {
+  ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach((ev) => {
+    document.addEventListener(ev, markUserActivity, { passive: true, capture: true });
+  });
+  setInterval(tickIdleHome, 1000);
+})();
+
 async function goWheel() {
   const t=I18N[lang]; const w=chosenTherapist;
   if(!w){
