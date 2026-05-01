@@ -50,16 +50,29 @@ function buildSqlConfig() {
   };
 }
 
-let poolPromise = null;
+let poolInstance = null;
+let poolConnectPromise = null;
+
 async function getPool() {
-  if (!poolPromise) {
-    const cfg = buildSqlConfig();
-    if (!cfg.server || !cfg.database || !cfg.user || !cfg.password) {
-      throw new Error('Missing Lapis connection env vars.');
-    }
-    poolPromise = sql.connect(cfg);
+  const cfg = buildSqlConfig();
+  if (!cfg.server || !cfg.database || !cfg.user || !cfg.password) {
+    throw new Error('Missing Lapis connection env vars.');
   }
-  return poolPromise;
+  if (poolInstance) return poolInstance;
+  if (!poolConnectPromise) {
+    poolConnectPromise = sql
+      .connect(cfg)
+      .then((pool) => {
+        poolInstance = pool;
+        poolConnectPromise = null;
+        return pool;
+      })
+      .catch((err) => {
+        poolConnectPromise = null;
+        throw err;
+      });
+  }
+  return poolConnectPromise;
 }
 
 const RANDEVU_SQL = `
@@ -80,7 +93,7 @@ const RANDEVU_SQL = `
   LEFT JOIN t_LP_PlanSatisDurumlari psd ON psd.PlanSatisDurumuID = ps.PlanSatisDurumuID
   LEFT JOIN t_FN_Firmalar f ON f.FirmaID = ps.MusteriID
   LEFT JOIN t_LP_Hizmetler h ON h.HizmetID = p.HizmetID
-  WHERE CAST(p.BaslangicSaati AS date) = @targetDate
+  WHERE CAST(p.BaslangicSaati AS date) = CONVERT(date, @targetDate, 23)
     AND pp.PersonelID = @therapistId
     AND ps.PlanSatisDurumuID IN (1, 2, 4, 8)
     AND NOT (
@@ -126,8 +139,9 @@ function buildSlotsFromBooked(bookedSet) {
 }
 
 async function getBookedSetForTherapistDate(pool, therapistId, targetDate) {
+  const dateStr = dateKeyLocal(targetDate);
   const result = await pool.request()
-    .input('targetDate', sql.Date, targetDate)
+    .input('targetDate', sql.VarChar(10), dateStr)
     .input('therapistId', sql.Int, therapistId)
     .query(RANDEVU_SQL);
 
@@ -273,9 +287,10 @@ app.get('/api/lapis/slots', async (req, res) => {
       tomorrow: buildSlotsFromBooked(tomorrowBooked)
     });
   } catch (err) {
+    console.error('[api/lapis/slots]', err);
     return res.status(500).json({
       error: 'Failed to fetch slots from Lapis.',
-      detail: err.message
+      detail: err.message || String(err)
     });
   }
 });
@@ -327,9 +342,10 @@ app.get('/api/lapis/pricing', async (req, res) => {
       slices
     });
   } catch (err) {
+    console.error('[api/lapis/pricing]', err);
     return res.status(500).json({
       error: 'Failed to calculate dynamic pricing wheel.',
-      detail: err.message
+      detail: err.message || String(err)
     });
   }
 });

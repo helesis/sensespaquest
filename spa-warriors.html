@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Sense Spa Quest · Voyage Sorgun</title>
 <audio id="bgm" src="Lotus_Coin_Glow.mp3" loop autoplay playsinline preload="auto"></audio>
 <audio id="quiz-bgm" src="Quiz.mp3" loop playsinline preload="auto"></audio>
@@ -16,7 +16,12 @@
   --mono:'Share Tech Mono',monospace; --sans:'Rajdhani',sans-serif;
   --title-arcade:'Bebas Neue','Anton',Impact,sans-serif;
 }
-html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidden;}
+html,body{
+  width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidden;
+  touch-action:manipulation;
+  -ms-touch-action:manipulation;
+  overscroll-behavior:none;
+}
 
 /* ── ROOT ── */
 .root{position:relative;width:100vw;height:100dvh;max-height:100dvh;min-height:100dvh;overflow:hidden;font-family:var(--sans);color:var(--text);background:var(--bg);}
@@ -932,6 +937,18 @@ function normalizeSlotPayload(payload) {
   };
 }
 
+async function readFetchErrorDetail(res) {
+  const text = await res.text();
+  try {
+    const j = JSON.parse(text);
+    if (j && (j.detail || j.error)) {
+      const parts = [j.error, j.detail].filter(Boolean);
+      return parts.join(' — ') || text.slice(0, 400);
+    }
+  } catch (_) {}
+  return text.trim().slice(0, 400) || res.statusText || '';
+}
+
 async function getSlotsForWarrior(warriorId) {
   const therapistId = await getTherapistIdForWarrior(warriorId);
   if (!window.location || !/^https?:$/.test(window.location.protocol)) {
@@ -940,7 +957,10 @@ async function getSlotsForWarrior(warriorId) {
   const res = await fetch(`/api/lapis/slots?warriorId=${encodeURIComponent(warriorId)}&therapistId=${encodeURIComponent(therapistId)}`, {
     headers: { 'Accept': 'application/json' }
   });
-  if (!res.ok) throw new Error(`Slots API ${res.status}`);
+  if (!res.ok) {
+    const detail = await readFetchErrorDetail(res);
+    throw new Error(`Slots API ${res.status}${detail ? ': ' + detail : ''}`);
+  }
   const data = await res.json();
   const normalized = normalizeSlotPayload(data);
   if (!normalized.today.length && !normalized.tomorrow.length) {
@@ -965,7 +985,10 @@ async function getWheelSlicesForSelection(warriorId, slot, langCode) {
   const res = await fetch(`/api/lapis/pricing?${params.toString()}`, {
     headers: { 'Accept': 'application/json' }
   });
-  if (!res.ok) throw new Error(`Pricing API ${res.status}`);
+  if (!res.ok) {
+    const detail = await readFetchErrorDetail(res);
+    throw new Error(`Pricing API ${res.status}${detail ? ': ' + detail : ''}`);
+  }
   const data = await res.json();
   if (!Array.isArray(data.slices) || !data.slices.length) {
     throw new Error('Lapis pricing returned no wheel slices.');
@@ -2670,6 +2693,33 @@ let sess=7284;setInterval(()=>{if(Math.random()<.15)document.getElementById('sc-
     setTimeout(() => {
       acquire().catch(() => {});
     }, 100);
+  });
+})();
+
+/* Kiosk: pinch / ctrl+tekerlek zoom ve Safari gesture zoom — uygulamadan kaybolmayı azaltır (OS jestleri ayrı). */
+(function setupKioskGestureLock() {
+  function blockMultiTouch(e) {
+    if (e.touches && e.touches.length > 1) e.preventDefault();
+  }
+  document.addEventListener('touchstart', blockMultiTouch, { passive: false, capture: true });
+  document.addEventListener('touchmove', blockMultiTouch, { passive: false, capture: true });
+
+  document.addEventListener(
+    'wheel',
+    function (e) {
+      if (e.ctrlKey) e.preventDefault();
+    },
+    { passive: false, capture: true }
+  );
+
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((type) => {
+    document.addEventListener(
+      type,
+      function (e) {
+        e.preventDefault();
+      },
+      { passive: false, capture: true }
+    );
   });
 })();
 </script>
