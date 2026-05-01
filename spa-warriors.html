@@ -21,9 +21,19 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
 /* ── ROOT ── */
 .root{position:relative;width:100vw;height:100dvh;max-height:100dvh;min-height:100dvh;overflow:hidden;font-family:var(--sans);color:var(--text);background:var(--bg);}
 .root::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:100;}
-.vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.65) 100%);pointer-events:none;z-index:99;}
-#bgCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;}
-#bali-backdrop{position:absolute;inset:52px 0 0 0;z-index:2;pointer-events:none;overflow:hidden;opacity:.55;}
+.vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 42%,rgba(0,0,0,0.72) 100%);pointer-events:none;z-index:99;}
+/* Tam ekran fotoğraf arka plan — assets/game-background.png */
+#game-bg-photo{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+  background:url('assets/game-background.png') center center / cover no-repeat fixed;
+  pointer-events:none;
+}
+#bgCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;display:none;pointer-events:none;}
+#bali-backdrop{display:none;}
 .b-sky{position:absolute;inset:0;background:
   radial-gradient(980px 420px at 84% 9%,rgba(255,195,105,.52),rgba(255,170,88,.2) 45%,transparent 68%),
   radial-gradient(760px 280px at 74% 6%,rgba(255,231,170,.32),transparent 66%),
@@ -68,13 +78,13 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
 
 /* ── CORNERS ── */
 .corner{position:absolute;width:22px;height:22px;z-index:90;}
-.corner.tl{top:56px;left:16px;border-top:1px solid var(--gold-dim);border-left:1px solid var(--gold-dim);}
-.corner.tr{top:56px;right:16px;border-top:1px solid var(--gold-dim);border-right:1px solid var(--gold-dim);}
+.corner.tl{top:112px;left:16px;border-top:1px solid var(--gold-dim);border-left:1px solid var(--gold-dim);}
+.corner.tr{top:112px;right:16px;border-top:1px solid var(--gold-dim);border-right:1px solid var(--gold-dim);}
 .corner.bl{bottom:16px;left:16px;border-bottom:1px solid var(--gold-dim);border-left:1px solid var(--gold-dim);}
 .corner.br{bottom:16px;right:16px;border-bottom:1px solid var(--gold-dim);border-right:1px solid var(--gold-dim);}
 
 /* ── SIDE AMBIENT SCENERY (arcade rice fields + palms) ── */
-#ambient-sides{position:absolute;inset:52px 0 0 0;pointer-events:none;z-index:12;overflow:hidden;}
+#ambient-sides{display:none;position:absolute;inset:104px 0 0 0;pointer-events:none;z-index:12;overflow:hidden;}
 .side-scene{position:absolute;top:0;bottom:0;width:17vw;min-width:120px;max-width:250px;opacity:.72;}
 .side-scene.left{left:0;}
 .side-scene.right{right:0;transform:scaleX(-1);}
@@ -110,7 +120,7 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
 }
 
 /* ── SCREEN SYSTEM ── */
-.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:50;padding:52px 0 0;min-height:0;overflow:hidden;box-sizing:border-box;}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:50;padding:104px 0 0;min-height:0;overflow:hidden;box-sizing:border-box;}
 .screen.active{display:flex;}
 
 /* ── ATTRACT (tek ekran, scroll yok; poster alanı container query ile sığar) ── */
@@ -123,7 +133,7 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
   flex-direction:column;
   align-items:center;
   justify-content:flex-start;
-  padding:6px 12px 4px;
+  padding:calc(104px + clamp(36px,7dvh,88px)) 12px clamp(8px,2dvh,24px);
   overflow:hidden;
 }
 .attract-stack{
@@ -284,7 +294,7 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
 .insert-coin{
   flex-shrink:0;
   font-family:var(--mono);
-  font-size:clamp(14px,2.8vw,28px);
+  font-size:clamp(21px,4.2vw,42px);
   font-weight:500;
   letter-spacing:0.38em;
   text-transform:uppercase;
@@ -292,7 +302,7 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
   text-align:center;
   cursor:pointer;
   user-select:none;
-  margin-top:clamp(4px,1.4vh,22px);
+  margin-top:clamp(8px,2.8vh,44px);
   padding:clamp(8px,1.2vh,12px) 14px clamp(8px,1.2vh,14px);
   animation:attractTapBlink 1.35s ease-in-out infinite;
 }
@@ -317,7 +327,7 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
   padding:clamp(14px,2.8dvh,36px) clamp(14px,3.5vw,40px);
   max-width:560px;
   width:min(560px,92vw);
-  max-height:calc(100dvh - 58px);
+  max-height:calc(100dvh - 110px);
   min-height:0;
   overflow:hidden;
   text-align:center;
@@ -575,6 +585,7 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
 <body>
 <div class="root" id="root">
   <canvas id="bgCanvas"></canvas>
+  <div id="game-bg-photo" aria-hidden="true"></div>
   <div id="bali-backdrop" aria-hidden="true">
     <div class="b-sky"></div>
     <div class="b-mountain"></div>
