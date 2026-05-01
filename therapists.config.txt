@@ -1,0 +1,6 @@
+# warriorId|therapistId|displayName|active(1/0)
+putu|35|Putu|1
+yati|223|Yati|1
+santhi|242|Santhi|1
+erna|248|Erna|1
+tia|249|Tia|1
