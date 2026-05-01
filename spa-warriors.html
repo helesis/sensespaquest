@@ -580,6 +580,46 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
 /* Anim */
 .fade-in{animation:fadeIn .5s ease both;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* file:// — API yok; sunucu ile açın */
+.file-protocol-warning{
+  position:fixed;
+  inset:0;
+  z-index:10050;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(2,2,10,.94);
+  font-family:var(--sans);
+  color:#eee;
+  text-align:left;
+}
+.file-protocol-warning[hidden]{display:none!important;}
+.file-protocol-warning__box{
+  max-width:540px;
+  border:1px solid var(--gold);
+  border-radius:12px;
+  padding:clamp(18px,3vw,28px);
+  background:rgba(8,8,22,.97);
+  box-shadow:0 0 48px rgba(201,168,76,.12);
+}
+.file-protocol-warning__box h2{font-size:clamp(16px,2.5vw,20px);color:var(--gold);margin-bottom:14px;font-weight:600;letter-spacing:1px;}
+.file-protocol-warning__box p{font-size:14px;line-height:1.5;color:rgba(255,255,255,.88);margin-bottom:10px;}
+.file-protocol-warning__box pre{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:0.5px;
+  background:rgba(0,0,0,.45);
+  padding:14px 16px;
+  border-radius:8px;
+  margin:14px 0;
+  overflow-x:auto;
+  color:#d4e8cc;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.file-protocol-warning__box code{font-family:var(--mono);color:var(--gold);}
 </style>
 </head>
 <body>
@@ -737,9 +777,31 @@ html,body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow
       </div>
     </div>
   </div>
+
+  <div id="file-protocol-warning" class="file-protocol-warning" hidden role="alert">
+    <div class="file-protocol-warning__box">
+      <h2>Sunucu gerekli · Server required</h2>
+      <p>Bu sayfa <code>file://</code> ile açıldığı için API ve veritabanı çağrıları çalışmaz. Proje klasöründe Node sunucusunu başlatıp uygulamayı <strong>http</strong> ile açın.</p>
+      <p><strong>EN:</strong> Do not open the HTML file directly. From the project folder run <code>npm install</code> then <code>npm start</code>, then open <code>http://127.0.0.1:3000</code> (or use <code>start.bat</code> on Windows).</p>
+      <pre>cd sensespaquest
+npm install
+npm start</pre>
+      <p>Tarayıcı: <code>http://127.0.0.1:3000</code> · Uzak PC’de sunucu aynı makinedeyse bu adresi kullanın; başka makineden erişecekseniz sunucunun dinlediği IP ve güvenlik duvarı kurallarını açın.</p>
+    </div>
+  </div>
 </div>
 
 <script>
+(function fileOriginGuard(){
+  try {
+    if (!window.location || /^https?:$/i.test(String(window.location.protocol))) return;
+    requestAnimationFrame(function(){
+      var el = document.getElementById('file-protocol-warning');
+      if (el) el.removeAttribute('hidden');
+    });
+  } catch (e) {}
+})();
+
 /* ═══════════════════════════════════════════
    DATA
 ═══════════════════════════════════════════ */
@@ -776,6 +838,9 @@ let therapistConfigPromise = null;
 
 async function getTherapistConfig() {
   if (therapistConfigCache) return therapistConfigCache;
+  if (!window.location || !/^https?:$/i.test(String(window.location.protocol))) {
+    throw new Error('Uygulama file:// ile açılamaz. Proje klasöründe npm start ile sunucuyu çalıştırıp http://127.0.0.1:3000 adresinden açın.');
+  }
   if (therapistConfigPromise) return therapistConfigPromise;
   therapistConfigPromise = fetch('/api/config/therapists', { headers: { 'Accept': 'application/json' } })
     .then((res) => {
@@ -908,12 +973,14 @@ async function getWheelSlicesForSelection(warriorId, slot, langCode) {
   return data.slices;
 }
 
-getTherapistConfig()
-  .then((cfg) => {
-    applyTherapistDisplayNames(cfg);
-    if (typeof setWarrior === 'function' && typeof litIdx !== 'undefined') setWarrior(litIdx);
-  })
-  .catch(() => {});
+if (window.location && /^https?:$/i.test(String(window.location.protocol))) {
+  getTherapistConfig()
+    .then((cfg) => {
+      applyTherapistDisplayNames(cfg);
+      if (typeof setWarrior === 'function' && typeof litIdx !== 'undefined') setWarrior(litIdx);
+    })
+    .catch(() => {});
+}
 
 const STAT_COLORS = ['#c9a84c','#5db8e0','#6abf6a','#e0a030'];
 

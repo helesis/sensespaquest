@@ -1,5 +1,7 @@
 @echo off
 REM Sense Spa Quest: Node sunucusu + Edge/Chrome tam ekran kiosk
+REM ONEMLI: spa-warriors.html dosyasina cift tiklamayin (file://) — API/CORS calismaz.
+REM Bu betik npm start ile http sunar; tarayici http://127.0.0.1:PORT ile acilir.
 REM Farkli port: set PORT=8080 && start.bat  (.env icindeki PORT ile ayni olmali)
 setlocal EnableExtensions
 cd /d "%~dp0"
@@ -52,7 +54,8 @@ if exist "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" (
 )
 
 if defined BROWSER (
-  echo Kiosk modu: %URL%
+  echo Kiosk modu ^(http^): %URL%
+  echo HTML dosyasini dosyadan acmayin; her zaman bu adres veya start.bat kullanin.
   if /I "%BKIND%"=="edge" (
     start "" "%BROWSER%" --kiosk "%URL%" --edge-kiosk-type=fullscreen --no-first-run
   ) else (
