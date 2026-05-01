@@ -199,11 +199,15 @@ function normalizeWeights(arr) {
 
 /**
  * Çark dilimleri: hepsi gerçek indirim yüzdesi (Standart / Aromaterapi metin olarak, pct > 0).
- * occupancyRatio 0 → çoğu slot boş → yüksek yüzdeler (%25–30) daha olası;
- * 1 → dolu takvim → düşük yüzdeler (%5–10) daha olası.
+ * occupancyRatio 0 → çoğu slot boş → üst dilimler mümkün ama nadir;
+ * 1 → dolu takvim → neredeyse hep düşük yüzdeler.
+ * Orta dolulukta bile üst dilimler hızlı düşer (convex blend).
+ * Hafta sonu / akşam prime saat: %25–30 belirgin şekilde cezalanır.
  */
-function buildDynamicWheelSlices({ occupancyRatio, isWeekend, isPeakHour, dayType, lang }) {
-  const t = clamp(occupancyRatio, 0, 1);
+function buildDynamicWheelSlices({ occupancyRatio, isWeekend, isPremiumSlot, dayType, lang }) {
+  const tRaw = clamp(occupancyRatio, 0, 1);
+  /* Erken “sıkı” eğri: takvim %40 doluysa bile sonuç ~%60 “full” gibi davranır */
+  const t = clamp(1 - Math.pow(1 - tRaw, 1.55), 0, 1);
   const langKey = normalizePricingLang(lang);
   const labels = WHEEL_SLICE_I18N[langKey] || WHEEL_SLICE_I18N.en;
 
@@ -216,20 +220,21 @@ function buildDynamicWheelSlices({ occupancyRatio, isWeekend, isPeakHour, dayTyp
     { pct: 30, color: '#0c1628', tc: '#7ec8ed' }
   ];
 
-  // Boş takvim (t≈0): yüksek dilimlere ağırlık; dolu (t≈1): %5–%10’a ağırlık
-  const wEmpty = [0.04, 0.07, 0.14, 0.22, 0.26, 0.27];
-  const wFull = [0.34, 0.28, 0.16, 0.12, 0.06, 0.04];
+  /* Boş: üst dilimler toplamda ~%35’ten fazla olmasın; dolu: %5–10 hakim, %30 nadir */
+  const wEmpty = [0.10, 0.16, 0.24, 0.22, 0.16, 0.12];
+  const wFull = [0.44, 0.34, 0.12, 0.06, 0.03, 0.01];
 
   let weights = defs.map((_, i) => wEmpty[i] * (1 - t) + wFull[i] * t);
 
   if (isWeekend) {
-    weights = weights.map((w, i) => w * (i <= 1 ? 1.08 : i >= 4 ? 0.92 : 1));
+    weights = weights.map((w, i) => w * (i <= 1 ? 1.1 : i >= 4 ? 0.55 : 1));
   }
-  if (isPeakHour) {
-    weights = weights.map((w, i) => w * (i <= 2 ? 1.06 : 0.95));
+  if (isPremiumSlot) {
+    weights = weights.map((w, i) => w * (i <= 1 ? 1.18 : i >= 4 ? 0.32 : i === 3 ? 0.92 : 1));
   }
+  /* Yarın için üst dilim bonusu kaldırıldı (önceden %25–30’u artırıyordu) */
   if (dayType === 'tomorrow') {
-    weights = weights.map((w, i) => w * (i >= 3 ? 1.04 : 0.98));
+    weights = weights.map((w, i) => w * (i <= 2 ? 1.02 : i >= 5 ? 0.97 : 1));
   }
 
   weights = normalizeWeights(weights);
@@ -302,8 +307,11 @@ app.get('/api/lapis/pricing', async (req, res) => {
     const isWeekend = [0, 6].includes(baseDate.getDay());
     const hour = Number((selectedTime || '00:00').split(':')[0]);
     const isPeakHour = hour >= 17 && hour <= 19;
+    const isPremiumSlot =
+      (hour >= 17 && hour <= 20) ||
+      (hour >= 11 && hour <= 13);
 
-    const slices = buildDynamicWheelSlices({ occupancyRatio, isWeekend, isPeakHour, dayType, lang });
+    const slices = buildDynamicWheelSlices({ occupancyRatio, isWeekend, isPremiumSlot, dayType, lang });
 
     return res.json({
       meta: {
@@ -312,6 +320,7 @@ app.get('/api/lapis/pricing', async (req, res) => {
         totalSlots,
         isWeekend,
         isPeakHour,
+        isPremiumSlot,
         dayType,
         lang
       },
