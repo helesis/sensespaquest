@@ -27,15 +27,24 @@ html,body{
 .root{position:relative;width:100vw;height:100dvh;max-height:100dvh;min-height:100dvh;overflow:hidden;font-family:var(--sans);color:var(--text);background:var(--bg);}
 .root::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:100;}
 .vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 42%,rgba(0,0,0,0.72) 100%);pointer-events:none;z-index:99;}
-/* Tam ekran fotoğraf arka plan — assets/game-background.png */
+/* Tam ekran video arka plan */
 #game-bg-photo{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
   z-index:0;
-  background:url('assets/game-background.png') center center / cover no-repeat fixed;
   pointer-events:none;
+  overflow:hidden;
+  background:var(--bg);
+}
+#game-bg-photo .game-bg-video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
 }
 #bgCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;display:none;pointer-events:none;}
 #bali-backdrop{display:none;}
@@ -138,14 +147,14 @@ html,body{
   flex-direction:column;
   align-items:center;
   justify-content:flex-start;
-  padding:calc(104px + clamp(36px,7dvh,88px)) 12px clamp(8px,2dvh,24px);
+  padding:calc(56px + clamp(14px,3dvh,40px)) clamp(6px,1.4vw,14px) clamp(6px,1.8dvh,20px);
   overflow:hidden;
 }
 .attract-stack{
   flex:1 1 auto;
   min-height:0;
   width:100%;
-  max-width:min(960px,100%);
+  max-width:min(1180px,calc(100vw - 28px));
   display:flex;
   flex-direction:column;
   align-items:stretch;
@@ -160,7 +169,7 @@ html,body{
   width:100%;
   border:1px solid rgba(201,168,76,.32);
   border-radius:14px;
-  background:rgba(4,4,15,.82);
+  background:rgba(4,4,15,.58);
   box-shadow:0 12px 48px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.05);
 }
 .attract-card-head{
@@ -173,19 +182,33 @@ html,body{
   flex:1 1 auto;
   min-height:0;
   display:grid;
-  grid-template-columns:1.08fr 0.92fr;
+  grid-template-columns:minmax(0,1.12fr) minmax(52px,76px) minmax(0,1fr);
   gap:0;
   align-items:stretch;
 }
 @media (max-width:760px){
   .attract-card-body{
     grid-template-columns:1fr;
-    grid-template-rows:minmax(0,1fr) minmax(0,1.12fr);
+    grid-template-rows:minmax(0,1fr) auto minmax(0,1.18fr);
   }
 }
-.attract-map-col{position:relative;min-height:0;border-right:1px solid rgba(201,168,76,.12);}
+.attract-map-col{
+  position:relative;
+  min-height:0;
+  border-right:1px solid rgba(201,168,76,.12);
+}
+.attract-dots-col{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:0;
+  min-width:0;
+  padding:clamp(4px,1vh,10px) 2px;
+  border-right:1px solid rgba(201,168,76,.12);
+}
 @media (max-width:760px){
   .attract-map-col{border-right:none;border-bottom:1px solid rgba(201,168,76,.12);}
+  .attract-dots-col{border-right:none;border-bottom:1px solid rgba(201,168,76,.12);}
 }
 .map-area{position:absolute;inset:0;overflow:hidden;z-index:55;}
 #mapCanvas{position:absolute;inset:0;width:100%;height:100%;}
@@ -203,10 +226,28 @@ html,body{
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  padding:clamp(4px,1vh,12px) clamp(6px,2vw,14px) clamp(4px,1vh,12px);
-  gap:clamp(2px,0.6vh,6px);
+  padding:clamp(4px,1vh,12px) clamp(6px,1.4vw,12px) clamp(4px,1vh,12px);
+  gap:0;
   min-height:0;
   overflow:hidden;
+}
+.attract-dots-col .parade-dots{
+  flex-direction:column;
+  flex-wrap:nowrap;
+  justify-content:center;
+  align-items:center;
+  gap:clamp(6px,1.4dvh,12px);
+  margin-top:0;
+}
+@media (max-width:760px){
+  .attract-dots-col .parade-dots{
+    flex-direction:row;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+    gap:clamp(6px,1.5vw,10px);
+    padding:6px 8px;
+  }
 }
 .score-row{display:flex;gap:clamp(12px,4vw,28px);margin-bottom:clamp(4px,1vh,10px);justify-content:center;}
 .sc-item{text-align:center;}
@@ -252,7 +293,7 @@ html,body{
   min-height:0;
   margin:0;
   display:none;
-  align-items:center;
+  align-items:stretch;
   justify-content:center;
   overflow:hidden;
   container-type:size;
@@ -291,7 +332,7 @@ html,body{
   display:block;
 }
 .avatar-img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
-.parade-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(6px,1.5vw,10px);margin-top:clamp(4px,1vh,12px);flex-shrink:0;}
+.parade-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(6px,1.5vw,10px);margin-top:0;flex-shrink:0;}
 .p-dot{width:clamp(44px,8vw,64px);height:clamp(44px,8vw,64px);border-radius:50%;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .3s;overflow:hidden;}
 .p-dot-img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;}
 .p-dot.active{border-color:rgba(201,168,76,.8);box-shadow:0 0 12px rgba(201,168,76,.35);transform:scale(1.15);}
@@ -630,7 +671,9 @@ html,body{
 <body>
 <div class="root" id="root">
   <canvas id="bgCanvas"></canvas>
-  <div id="game-bg-photo" aria-hidden="true"></div>
+  <div id="game-bg-photo" aria-hidden="true">
+    <video id="game-bg-video" class="game-bg-video" src="kling_20260502_VIDEO_Image1yava_792_0.mp4" muted loop playsinline autoplay preload="auto"></video>
+  </div>
   <div id="bali-backdrop" aria-hidden="true">
     <div class="b-sky"></div>
     <div class="b-mountain"></div>
@@ -697,13 +740,15 @@ html,body{
               <div class="pulse-ring" id="pulse-ring"></div>
             </div>
           </div>
+          <div class="attract-dots-col" aria-label="Therapists">
+            <div class="parade-dots" id="parade-dots"></div>
+          </div>
           <div class="attract-therapists" id="attract-right">
             <div class="ws-poster-wrap" id="ws-poster-wrap" aria-hidden="true">
               <div class="ws-poster">
                 <img id="ws-poster-img" alt="" decoding="async" loading="eager" fetchpriority="high" />
               </div>
             </div>
-            <div class="parade-dots" id="parade-dots"></div>
           </div>
         </div>
       </div>
@@ -2404,7 +2449,7 @@ function drawIsland(poly,fill,stroke){mctx.beginPath();poly.forEach(([nx,ny],i)=
 let litIdx=0;
 function drawMap(){
   mctx.clearRect(0,0,MW,MH);
-  mctx.fillStyle='#050e1a';mctx.fillRect(0,0,MW,MH);
+  mctx.fillStyle='rgba(5,14,26,0.22)';mctx.fillRect(0,0,MW,MH);
   mctx.strokeStyle='rgba(93,184,224,0.04)';mctx.lineWidth=.5;
   for(let i=0;i<20;i++){const[sx]=toScreen(i/20,0);mctx.beginPath();mctx.moveTo(sx,0);mctx.lineTo(sx,MH);mctx.stroke();}
   for(let i=0;i<20;i++){const[,sy]=toScreen(0,i/20);mctx.beginPath();mctx.moveTo(0,sy);mctx.lineTo(MW,sy);mctx.stroke();}
@@ -2602,6 +2647,17 @@ if (quizBgm) {
 
 /* Initial attempt */
 ensureMusicPlayback();
+
+(function setupBgVideo(){
+  const v=document.getElementById('game-bg-video');
+  if(!v)return;
+  function tryPlay(){v.play().catch(()=>{});}
+  window.addEventListener('load',tryPlay);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)tryPlay();});
+  document.addEventListener('pointerdown',tryPlay,{passive:true});
+  v.addEventListener('stalled',tryPlay);
+  tryPlay();
+})();
 
 /* Clock */
 function tickClock(){const n=new Date();document.getElementById('live-time').textContent=`SPA · ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;}
